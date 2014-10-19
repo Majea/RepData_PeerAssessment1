@@ -1,11 +1,6 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Majea"
-date: "Tuesday, October 14, 2014"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Majea  
+Tuesday, October 14, 2014  
 
 ## Introduction
 
@@ -51,8 +46,16 @@ will first load the data into memory. Some of the later operations will require
 a dataset without NA values, so we'll prepare a filtered version of the dataset 
 without the NA values.
 
-```{r}
+
+```r
 Sys.setlocale("LC_TIME", "English") #make sure dates are in English
+```
+
+```
+## [1] "English_United States.1252"
+```
+
+```r
 library(plyr)
 library(lattice)
 unzip('activity.zip')
@@ -67,20 +70,34 @@ We will now evaluate the mean and median number of steps taken by day. Let's
 first have a look at the histogram of the number of steps taken by day. Then 
 we'll evaluate the mean and median. NA values are ignored in both evaluations.
 
-```{r historgram}
+
+```r
 sum <- tapply(data$steps, data$date, sum)
 barplot(sum, main="Total steps taken per day", xlab="Date", 
         ylab="Total number of steps", col="lightblue3")
-
 ```
+
+![plot of chunk historgram](./PA1_template_files/figure-html/historgram.png) 
 
 Dates for which no value is available (NA) are ignored in the following 
 computation. In this analysis, missing values are ignored. 
 We'll apply specific treatment on the NA values later.
 
-```{r mean}
+
+```r
 mean(sum, na.rm=TRUE)
+```
+
+```
+## [1] 10766
+```
+
+```r
 median(sum, na.rm=TRUE)
+```
+
+```
+## [1] 10765
 ```
 
 
@@ -90,7 +107,8 @@ We will now have a look at the average number of steps taken per interval.
 In this analysis, missing values are ignored. 
 We'll apply specific treatment on the NA values later.
 
-```{r daily_activity}
+
+```r
 avg <- aggregate(data[, "steps"], list(interval = data$interval), mean, 
                  na.rm=TRUE)
 with(avg, plot(interval, x, type="l", 
@@ -98,11 +116,18 @@ with(avg, plot(interval, x, type="l",
 title(main = "Average daily activity pattern")
 ```
 
+![plot of chunk daily_activity](./PA1_template_files/figure-html/daily_activity.png) 
+
 The interval that contains the maximum number of steps on the average is the 
 following:
 
-```{r}
+
+```r
 avg[avg$x==max(avg$x),1]
+```
+
+```
+## [1] 835
 ```
 
 ## Imputing missing values
@@ -111,22 +136,40 @@ We will now apply specific treatment to the missing (NA) values. Here is the
 number of missing values to treat in the *steps* column. 
 
 
-```{r}
+
+```r
 sum(is.na(data$steps))
+```
+
+```
+## [1] 2304
 ```
 
 Please notice there are only missing values for the *steps* column.
 
-```{r}
+
+```r
 sum(is.na(data$interval))
+```
+
+```
+## [1] 0
+```
+
+```r
 sum(is.na(data$date))
+```
+
+```
+## [1] 0
 ```
 
 We'll handle the missing values by replacing them by the mean value of the same 
 day. We consider 0 steps where taken when we only have missing values for one 
 full day. 
 
-```{r}
+
+```r
 # first calculate the mean per day
 meanPerDay <- aggregate(data[,"steps"], list(date=data$date), mean, na.rm=TRUE)
 colnames(meanPerDay) <- c("date", "meanPerDay")
@@ -139,17 +182,32 @@ merged[is.na(merged$steps), 2] <- merged[is.na(merged$steps), 4]
 
 Here is a chart corresponding to the number of steps taken by day.
 
-```{r}
+
+```r
 sum_merged <- tapply(merged$steps, merged$date, sum)
 barplot(sum_merged, main="Total steps taken per day (no missing value)", 
         xlab="Date", ylab="Total number of steps", col="lightblue3")
 ```
 
+![plot of chunk unnamed-chunk-6](./PA1_template_files/figure-html/unnamed-chunk-6.png) 
+
 And here are the means and median with the missing values replaced
 
-```{r}
+
+```r
 mean(sum_merged, na.rm=TRUE)
+```
+
+```
+## [1] 9354
+```
+
+```r
 median(sum_merged, na.rm=TRUE)
+```
+
+```
+## [1] 10395
 ```
 
 As you can notice, both the graph and the median are the same as before. 
@@ -158,10 +216,7 @@ Hence, all NA values were replaced by 0 values. This replacement has
 the impact on our calculations as ignoring the missing values, which is what
 we did our first calculations.
 
-```{r echo=FALSE}
-### TODO: proof the statement above by comparing the number of rows per day and 
-### the number of NA's per day
-```
+
 
 On the other side, the mean changed because the days that previously contained 
 null values now count in the number of values.
@@ -171,20 +226,22 @@ null values now count in the number of values.
 We will now identify what days in the data are week days and what are week-end 
 days. This new information is added to our data.
 
-```{r}
+
+```r
 wd <- weekdays(merged$date)
 wd[wd=="Monday"|wd=="Tuesday"|wd=="Wednesday"|wd=="Thursday"|
        wd=="Friday"] <- "weekday"
 wd[wd=="Saturday"|wd=="Sunday"] <- "weekend"
 wd <- factor(wd)
 merged$dayofweek <- wd
-``` 
+```
 
 Finally we'll compare the number of steps taken per interval averaged on week
 days or week-end days. To do this, we'll first calculate the averages and 
 then plot them.
 
-```{r}
+
+```r
 # the next line plots calculates the steps mean per 'interval' 
 # and per 'dayofweek'
 merged_avg <- ddply(merged, c("interval", "dayofweek"), 
@@ -192,6 +249,8 @@ merged_avg <- ddply(merged, c("interval", "dayofweek"),
 colnames(merged_avg) <- c("interval", "dayofweek", "steps")
 xyplot(steps ~ interval | dayofweek, data=merged_avg, layout=c(1,2), type="l")
 ```
+
+![plot of chunk unnamed-chunk-10](./PA1_template_files/figure-html/unnamed-chunk-10.png) 
 
 We can observe a slightly higher number of steps taken on week-end days 
 for some intervals between 1000 and 2000 while the peak around interval 800 
